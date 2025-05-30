@@ -15,6 +15,8 @@ def construct_link_processor(config: dict) -> LinkProcessor:
 
 class Testing(unittest.IsolatedAsyncioTestCase):
     async def test_format_relative_link(self):
+        test_out.log_starting_test_set("LinkProcessor - test format relative link")
+
         test_cases = [
             {
                 "name": "domain",
@@ -75,7 +77,7 @@ class Testing(unittest.IsolatedAsyncioTestCase):
         ]
 
         for test_case in test_cases:
-            test_out.LogStartingTest(test_case["name"])
+            test_out.log_starting_test(test_case["name"])
 
             parent_link = test_case["parent_link"]
             link_input_expected_output_pairs: dict = test_case["link_input_expected_output_pairs"]
@@ -88,6 +90,8 @@ class Testing(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(out, expected)
 
     async def test_evaluate_link(self):
+        test_out.log_starting_test_set("LinkProcessor - test evaluate link")
+
         test_cases = [
             {
                 "name": "default subdomain",
@@ -138,7 +142,7 @@ class Testing(unittest.IsolatedAsyncioTestCase):
         ]
 
         for test_case in test_cases:
-            test_out.LogStartingTest(test_case["name"])
+            test_out.log_starting_test(test_case["name"])
 
             link_input_expected_output_pairs = test_case["link_input_expected_output_pairs"]
 
@@ -150,6 +154,8 @@ class Testing(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(out, expected)
 
     async def test_process_link(self):
+        test_out.log_starting_test_set("LinkProcessor - test process link")
+
         test_cases = [
             {
                 "name": "Process link given: www.example-domain.com",
@@ -246,7 +252,7 @@ class Testing(unittest.IsolatedAsyncioTestCase):
         ]
 
         for test_case in test_cases:
-            test_out.LogStartingTest(test_case["name"])
+            test_out.log_starting_test(test_case["name"])
 
             expected_url = test_case["expected_url"]
             page_loader_response = [line.encode(encoding="utf-8") for line in test_case["page_loader_response"]]
@@ -268,5 +274,3 @@ class Testing(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(called_link, expected_url)
             self.assertEqual(all_links, expected_all_links)
             self.assertEqual(local_links, expected_local_links)
-
-

@@ -1,6 +1,6 @@
 # Pre-implementation Analysis
 
-Thanks for viewing this file - though it's not included in the task brief this analysis document has been created for my own reference. This document additionally details the underlying though processes and limitations of the initial krawler design... and also contains a couple of tongue in cheek remarks to sweeten the read because I imagine looking through these development challenges can be pretty tedious!
+Thanks for viewing this file - though it's not included in the task brief this analysis document has been created for my own reference. This document additionally details the underlying thought processes and limitations of the initial krawler design... and also contains a couple of tongue in cheek remarks to sweeten the read because I imagine looking through these development challenges can be pretty tedious!
 
 
 ## Task
@@ -79,7 +79,7 @@ Ideally the project would be presented as an HTTP `POST` endpoint like `/krawler
 
 And return the as-of-yet-unspecified response body specification.
 
-*However*, in the interest of time it will instead by a command line application to be used as such:
+*However*, in the interest of time it will instead be a command line application to be used as such:
 
 ```bash
 python3 krawler.py -s www -h example-domain.co.uk

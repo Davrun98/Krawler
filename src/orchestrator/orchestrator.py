@@ -5,10 +5,10 @@ from link_processor import processor
 from page_loader import loader
 
 class Orchestrator:
-    def __init__(self, subdomain: str, domain: str, extension: str):
-        self.page_loader_pool = Pooler(loader.construct_page_loader)
-
-        link_processor_config = processor.LinkProcessorConfiguration(self.page_loader_pool)
+    def __init__(self, subdomain: str, host: str):
+        page_loader_pool = Pooler(loader.construct_page_loader)
+        link_processor_config = processor.LinkProcessorConfiguration(page_loader_pool, subdomain, host)
+        
         self.link_processor_pool = Pooler(processor.construct_link_processor, link_processor_config)
 
         """

@@ -13,7 +13,6 @@ class LinkProcessorConfiguration:
 class LinkProcessor:
     def __init__(self, config: LinkProcessorConfiguration):
         self.page_loader_pool: Pooler = config.page_loader_pool
-        self.page_loader_pool: Pooler = config.page_loader_pool
         self.subdomain: str = config.subdomain
         self.host: str = config.host
 
@@ -21,7 +20,7 @@ class LinkProcessor:
         self.expected_host_elements = self.subdomain.split(".") if self.subdomain != "" else ["www"]
         self.expected_host_elements.extend(self.host.split("."))
 
-    async def format_relative_link(self, parent_link:str, link: str) -> str:
+    def format_relative_link(self, parent_link:str, link: str) -> str:
         formatted_link = ""
 
         formatted_link += f"{self.subdomain}." if self.subdomain != "" else "www."
@@ -46,8 +45,25 @@ class LinkProcessor:
 
         return formatted_link
 
+    @staticmethod
+    def fragment_link(link) -> tuple[str, str]:
+        # removes the scheme i.e. http/s
+        scheme_separation = link.split("//", 1)
+        remainder = scheme_separation[1] if len(scheme_separation) > 1 else scheme_separation[0]
+        # removes the path. netloc will look like: `relativepathsection` or `sub.domains.domain.ext` or `domain.ext`
+        netloc = remainder.split("/", 1)[0]
+        # removes port numbers
+        hostname = netloc.split(":", 1)[0]
 
-    async def evaluate_link(self, parent_link: str, link: str) -> tuple[bool, str]:
+        return netloc, hostname
+
+    def check_is_relative_link(self, link: str) -> bool:
+        netloc = self.fragment_link(link)[0]
+
+        # capture links like `/relative/path` or `./relative/path` or `../relative/path` or `relative/path` 
+        return bool(netloc == "" or netloc == "." or netloc == ".." or "." not in netloc)
+
+    def evaluate_link(self, link: str) -> tuple[bool, str]:
         """
         This element is insubstantial, due to the number of href variations.
         This won't work correctly for:
@@ -64,52 +80,52 @@ class LinkProcessor:
 
         """
 
-        # removes the scheme i.e. http/s
-        scheme_separation = link.split("//", 1)
-        remainder = scheme_separation[1] if len(scheme_separation) > 1 else scheme_separation[0]
-        # removes the path. netloc will look like: `relativepathsection` or `sub.domains.domain.ext` or `domain.ext`
-        netloc = remainder.split("/", 1)[0]
-        # removes port numbers
-        hostname = netloc.split(":", 1)[0]
+        hostname = self.fragment_link(link)[1]
 
-        # capture links like `/relative/path` or `./relative/path` or `../relative/path` or `relative/path` 
-        if netloc == "" or netloc == "." or netloc == ".." or "." not in netloc:
-            return True, await self.format_relative_link(parent_link, link)
-
-        # is third party link
+        # is third party link - note: this has a hole, www.NotTheRightHost.com would pass for www.TheRightHost.com
         if self.host not in hostname:
-            return False, ""
+            return False
         
         # specified subdomain is absent
         if self.subdomain != "" and self.subdomain != "www" and self.subdomain not in hostname:
-            return False, ""
+            return False
 
         # incorrect subdomain is present
         domain_items = hostname.split(".")
         for item in domain_items:
             if item not in self.expected_host_elements:
-                return False, ""
+                return False
 
-        return True, link
-        
+        return True
 
-    async def process_link(self, link: str):
+    async def process_link(self, link_to_process: str):
         # load page behind link
         loader: PageLoader = self.page_loader_pool.get_instance_from_pool()
-        content = await loader.load_html(link)
+        content = await loader.load_html(link_to_process)
         self.page_loader_pool.return_instance_to_pool(loader)
 
-        # rip links - sets used to automate negation of duplicates
-        all_links = set()
-        local_links = set()
+        all_links = []
+        local_links = []
+
+        # find all links
         for line in content:
             line = line.decode("utf-8")
-            all_links.extend(re.findall(r'href=["|\'][^"\']*[^"|\']*["|\']', content))
-        
-        for found_link in all_links:
-            is_valid, formatted_link = await self.evaluate_link(found_link)
-            if is_valid:
-                local_links.append(formatted_link)
+            found_links = re.findall(r'href=["\']([^"\']+)["\']', line)
+
+            for found_link in found_links:
+                # convert relative links to example-domain.com/relative/path format
+                if self.check_is_relative_link(found_link):
+                    found_link = self.format_relative_link(link_to_process, found_link)
+
+                # stop processing if already found
+                if found_link in all_links:
+                    continue
+
+                all_links.append(found_link)
+
+                # check if link is from same subdomain and host
+                if self.evaluate_link(found_link):
+                    local_links.append(found_link)
 
         return all_links, local_links
 

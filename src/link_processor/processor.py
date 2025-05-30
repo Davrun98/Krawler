@@ -28,7 +28,7 @@ class LinkProcessor:
         formatted_link += self.host
 
         # removes the scheme i.e. http/s
-        scheme_separation = link.split("//", 1)
+        scheme_separation = parent_link.split("//", 1)
         remainder = scheme_separation[1] if len(scheme_separation) > 1 else scheme_separation[0]
         # remove domain from parent link
         parent_link_elements = remainder.split("/", 1)  # domain.com, relative/path
@@ -85,7 +85,7 @@ class LinkProcessor:
 
         hostname = self.fragment_link(link)[1]
 
-        # is third party link - note: this has a hole, www.NotTheRightHost.com would pass for www.TheRightHost.com
+        # is third party link - note: this has a hole, www.NotTheRightHost.com would pass for www.TheRightHost.com TODO
         if self.host not in hostname:
             return False
         
@@ -104,7 +104,7 @@ class LinkProcessor:
     async def process_link(self, link_to_process: str) -> tuple[list, list]:
         # load page behind link
         loader: PageLoader = self.page_loader_pool.get_instance_from_pool()
-        
+
         try:
             content = await loader.load_html(link_to_process)
         except RequestFailedException:

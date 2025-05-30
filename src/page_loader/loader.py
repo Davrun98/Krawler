@@ -1,6 +1,6 @@
 import aiohttp
 
-_invalid_file_extensions = [".css"]
+_invalid_patterns = [".css", "cdn-cgi"]
 
 class RequestFailedException(Exception):
     pass
@@ -39,7 +39,7 @@ class PageLoader:
         url = self.ensure_url_scheme(url)
 
         # filter common invalid files
-        for extension in _invalid_file_extensions:
+        for extension in _invalid_patterns:
             if extension in url:
                 raise InvalidContentTypeException
 
